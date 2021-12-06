@@ -2,16 +2,25 @@ package com.example.donkeychallenge.main
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.example.donkeychallenge.api.DonkeyRepository
 
-class MainViewModel : ViewModel() {
+class MainViewModel(private val donkeyRepository: DonkeyRepository) : ViewModel() {
 
-    private var klop = "klop"
+    suspend fun getNearbyHubs() {
+        val response = donkeyRepository.getNearbyHubs("55.672,12.566", 50)
 
-    fun some() {
-        Log.e("klop", "Some: $klop")
+        Log.e("klop", "H U B S")
+        response.hubs.forEach {
+            Log.e("klop", "${it.name} ${it.accountId}")
+        }
     }
 
-    fun someChange(change: String) {
-        klop = change
+    suspend fun search() {
+        val response = donkeyRepository.search("gade")
+
+        Log.e("klop", "S E A R C H   R E S U L T")
+        response.forEach {
+            Log.e("klop", "${it.name}")
+        }
     }
 }

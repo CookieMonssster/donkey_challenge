@@ -1,11 +1,11 @@
 package com.example.donkeychallenge.map
 
 import androidx.fragment.app.Fragment
-
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import com.example.donkeychallenge.R
 import com.example.donkeychallenge.databinding.FragmentMapBinding
 import com.example.donkeychallenge.main.MainViewModel
@@ -14,6 +14,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
 class MapFragment : Fragment() {
@@ -40,7 +41,12 @@ class MapFragment : Fragment() {
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(callback)
 
-        viewModel.some()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.getNearbyHubs()
+        }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.search()
+        }
     }
 }
