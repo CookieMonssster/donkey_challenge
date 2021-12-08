@@ -2,6 +2,7 @@ package com.example.donkeychallenge.map
 
 import androidx.fragment.app.Fragment
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +10,9 @@ import androidx.lifecycle.lifecycleScope
 import com.example.donkeychallenge.R
 import com.example.donkeychallenge.databinding.FragmentMapBinding
 import com.example.donkeychallenge.main.MainViewModel
+import com.example.donkeychallenge.search.SearchFragment
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
@@ -23,9 +26,14 @@ class MapFragment : Fragment() {
     private val viewModel by sharedViewModel<MainViewModel>()
 
     private val callback = OnMapReadyCallback { googleMap ->
-        val sydney = LatLng(-34.0, 151.0)
-        googleMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 10f))
+        prepareLiveDataObservers(googleMap)
+        //TODO add startin position
+        val copenhagen = LatLng(55.678, 12.589)
+        //googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(copenhagen, 13f))
+        googleMap.setOnCameraMoveListener {
+            //TODO klop debounce calls
+            getHubsInLocation(googleMap)
+        }
     }
 
     override fun onCreateView(
@@ -33,20 +41,46 @@ class MapFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? = FragmentMapBinding.inflate(inflater, container, false)
-        .also { binding = it}
+        .also { binding = it }
         .root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
+        initView()
         mapFragment?.getMapAsync(callback)
+    }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.getNearbyHubs()
+    private fun prepareLiveDataObservers(map: GoogleMap) = with(map) {
+        viewModel.pickedHub.observe(viewLifecycleOwner, {
+            LatLng(it.latitude.toDouble(), it.longitude.toDouble()).let { hubLocation ->
+                addMarker(MarkerOptions().position(hubLocation).title(it.name))
+                animateCamera(CameraUpdateFactory.newLatLngZoom(hubLocation, 15f))
+            }
+        })
+
+        viewModel.hubs.observe(viewLifecycleOwner, {
+            Log.e("klop", "H U B S")
+            it.hubs.forEach {
+                Log.e("klop", "${it.name}")
+            }
+        })
+    }
+
+    private fun initView() {
+        binding.searchButton.setOnClickListener {
+            //TODO use navigator instead?
+            activity?.supportFragmentManager
+                ?.beginTransaction()
+                ?.replace(R.id.fragment_container, SearchFragment.newInstance())
+                ?.addToBackStack(null)
+                ?.commit()
         }
+    }
 
+    private fun getHubsInLocation(map: GoogleMap) {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.search()
+            viewModel.getNearbyHubs(map.cameraPosition.target)
         }
     }
 }

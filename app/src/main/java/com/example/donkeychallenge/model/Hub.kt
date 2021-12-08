@@ -5,7 +5,6 @@ import com.google.gson.annotations.SerializedName
 data class Hub(
     @SerializedName("hub_type")
     val type: String,
-    @SerializedName("id")
     val id: String,
     @SerializedName("account_id")
     val accountId: Int,
