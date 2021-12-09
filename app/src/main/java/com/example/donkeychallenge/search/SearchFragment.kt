@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.donkeychallenge.databinding.FragmentSearchBinding
 import com.example.donkeychallenge.main.MainViewModel
 import com.example.donkeychallenge.model.SearchResult
+import com.example.donkeychallenge.utils.EventObserver
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.util.*
@@ -37,11 +38,6 @@ class SearchFragment : Fragment() {
         prepareLiveDataObserver()
     }
 
-    override fun onPause() {
-        super.onPause()
-        viewModel.clearSearchResults()
-    }
-
     private fun onHubClicked(hub: SearchResult) {
         Log.e("klop", "On Hub Clicked: ${hub.name}")
         viewModel.pickHub(hub)
@@ -56,7 +52,6 @@ class SearchFragment : Fragment() {
 
     private fun initView() = with(binding) {
         textInput.addTextChangedListener(object : TextWatcher {
-            //TODO add as extension?
             var timer: Timer? = null
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {} //not used
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
@@ -78,7 +73,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun prepareLiveDataObserver() {
-        viewModel.searchResult.observe(viewLifecycleOwner, { hubAdapter.updateList(it) })
+        viewModel.searchResult.observe(viewLifecycleOwner, EventObserver { hubAdapter.updateList(it) })
     }
 
     companion object {
