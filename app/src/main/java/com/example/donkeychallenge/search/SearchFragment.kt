@@ -3,14 +3,16 @@ package com.example.donkeychallenge.search
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.donkeychallenge.R
 import com.example.donkeychallenge.databinding.FragmentSearchBinding
+import com.example.donkeychallenge.extension.isConnected
 import com.example.donkeychallenge.main.MainViewModel
 import com.example.donkeychallenge.model.SearchResult
 import com.example.donkeychallenge.utils.EventObserver
@@ -39,14 +41,14 @@ class SearchFragment : Fragment() {
     }
 
     private fun onHubClicked(hub: SearchResult) {
-        Log.e("klop", "On Hub Clicked: ${hub.name}")
         viewModel.pickHub(hub)
         activity?.supportFragmentManager?.popBackStack()
     }
 
-    private fun search(query: String) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.search(query)
+    private fun search(query: String) = with(lifecycleScope) {
+        launch {
+            if (requireContext().isConnected()) viewModel.search(query)
+            else Toast.makeText(requireContext(), getString(R.string.no_internet), Toast.LENGTH_SHORT).show()
         }
     }
 
