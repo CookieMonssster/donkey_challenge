@@ -1,6 +1,7 @@
 package com.example.donkeychallenge.map
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +12,6 @@ import com.example.donkeychallenge.R
 import com.example.donkeychallenge.databinding.FragmentMapBinding
 import com.example.donkeychallenge.extension.cameraMove
 import com.example.donkeychallenge.extension.clicks
-import com.example.donkeychallenge.extension.isConnected
 import com.example.donkeychallenge.main.MainViewModel
 import com.example.donkeychallenge.model.HubLocation
 import com.example.donkeychallenge.search.SearchFragment
@@ -34,6 +34,7 @@ class MapFragment : Fragment() {
     private val viewModel by sharedViewModel<MainViewModel>()
     private val markersOnMap = mutableListOf<Marker>()
 
+
     private val callback = OnMapReadyCallback { googleMap ->
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(COPENHAGEN, INIT_ZOOM))
         prepareLiveDataObservers(googleMap)
@@ -55,14 +56,17 @@ class MapFragment : Fragment() {
         initView()
     }
 
-    private fun prepareLiveDataObservers(googleMap: GoogleMap) = with(googleMap) {
-        viewModel.pickedHub.observe(viewLifecycleOwner, EventObserver { showPickedHub(this, it) })
-        viewModel.hubsLocations.observe(viewLifecycleOwner, { showHubsLocation(this, it) })
+    private fun prepareLiveDataObservers(googleMap: GoogleMap) = with(viewModel) {
+        pickedHub.observe(viewLifecycleOwner, EventObserver { showPickedHub(googleMap, it) })
+        hubsLocations.observe(viewLifecycleOwner, { showHubsLocation(googleMap, it) })
+        error.observe(viewLifecycleOwner, EventObserver { showError(it) })
     }
 
     private fun initOnMapMoveListener(googleMap: GoogleMap) = with(googleMap) {
         lifecycleScope.launch {
-            cameraMove().sample(MARKER_REFRESH_INTERVAL).collect { getNearbyHubs(this@with) }
+            cameraMove().sample(MARKER_REFRESH_INTERVAL).collect {
+                getNearbyHubs(this@with)
+            }
         }
     }
 
@@ -84,13 +88,19 @@ class MapFragment : Fragment() {
         }
     }
 
-    private suspend fun getNearbyHubs(googleMap: GoogleMap) = with(googleMap) {
+    private fun getNearbyHubs(googleMap: GoogleMap) = with(googleMap) {
         removeInvisibleMarkers(this)
         projection.visibleRegion.latLngBounds.run {
-            val radius = (SphericalUtil.computeDistanceBetween(northeast, southwest) / 2).toInt()
-            if(requireContext().isConnected()) {
-                viewModel.getNearbyHubs(cameraPosition.target, radius, markersOnMap.map { it.position })
-            } else Toast.makeText(requireContext(), getString(R.string.no_internet), Toast.LENGTH_SHORT).show()
+            viewModel.getNearbyHubs(
+                cameraPosition.target,
+                getSearchRadius(this@with),
+                markersOnMap.map { it.position })
+        }
+    }
+
+    private fun getSearchRadius(googleMap: GoogleMap): Int = googleMap.run {
+        projection.visibleRegion.latLngBounds.run {
+            (SphericalUtil.computeDistanceBetween(northeast, southwest) / 2).toInt()
         }
     }
 
@@ -104,6 +114,11 @@ class MapFragment : Fragment() {
             }
         }
         markersOnMap.removeAll(markersToRemove)
+    }
+
+    private fun showError(throwable: Throwable) {
+        Log.e("Donkey", "Coroutine error: ${throwable.message}")
+        Toast.makeText(requireContext(), "Some error here!", Toast.LENGTH_SHORT).show()
     }
 
     private fun initView() = with(lifecycleScope) {

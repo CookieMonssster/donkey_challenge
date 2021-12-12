@@ -4,18 +4,18 @@ import com.google.gson.annotations.SerializedName
 
 data class Hub(
     @SerializedName("hub_type")
-    val type: String,
-    val id: String,
+    val type: String = "type",
+    val id: String = "id",
     @SerializedName("account_id")
-    val accountId: Int,
+    val accountId: Int = 3,
     val name: String,
     val latitude: String,
     val longitude: String,
-    val radius: Int,
+    val radius: Int = 500,
     @SerializedName("available_vehicles_count")
-    val availableVehiclesCount: Int,
+    val availableVehiclesCount: Int = 13,
     @SerializedName("vehicles_count")
-    val vehiclesCount: Int,
+    val vehiclesCount: Int = 3,
     @SerializedName("maximum_capacity")
-    val maximumCapacity: Int
+    val maximumCapacity: Int = 3
 )

@@ -3,20 +3,17 @@ package com.example.donkeychallenge.search
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.donkeychallenge.R
 import com.example.donkeychallenge.databinding.FragmentSearchBinding
-import com.example.donkeychallenge.extension.isConnected
 import com.example.donkeychallenge.main.MainViewModel
 import com.example.donkeychallenge.model.SearchResult
 import com.example.donkeychallenge.utils.EventObserver
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.util.*
 import kotlin.concurrent.schedule
@@ -45,11 +42,8 @@ class SearchFragment : Fragment() {
         activity?.supportFragmentManager?.popBackStack()
     }
 
-    private fun search(query: String) = with(lifecycleScope) {
-        launch {
-            if (requireContext().isConnected()) viewModel.search(query)
-            else Toast.makeText(requireContext(), getString(R.string.no_internet), Toast.LENGTH_SHORT).show()
-        }
+    private fun search(query: String) {
+        viewModel.search(query)
     }
 
     private fun initView() = with(binding) {
@@ -73,9 +67,16 @@ class SearchFragment : Fragment() {
             adapter = hubAdapter
         }
     }
+    private fun showError(throwable: Throwable) {
+        Log.e("Donkey", "Coroutine error: ${throwable.message}")
+        Toast.makeText(requireContext(), "Some error here!", Toast.LENGTH_SHORT).show()
+    }
 
-    private fun prepareLiveDataObserver() {
-        viewModel.searchResult.observe(viewLifecycleOwner, EventObserver { hubAdapter.updateList(it) })
+    private fun prepareLiveDataObserver() = with(viewModel) {
+        searchResult.observe(viewLifecycleOwner, EventObserver { hubAdapter.updateList(it) })
+        error.observe(viewLifecycleOwner, EventObserver {
+            showError(it)
+        })
     }
 
     companion object {
