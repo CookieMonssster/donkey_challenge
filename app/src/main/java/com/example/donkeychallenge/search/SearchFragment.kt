@@ -55,9 +55,10 @@ class SearchFragment : Fragment() {
             }
 
             override fun afterTextChanged(text: Editable?) {
-                timer = Timer()
-                timer?.schedule(TEXT_WATCHER_DELAY) {
-                    search(text.toString())
+                timer = Timer().apply {
+                    schedule(TEXT_WATCHER_DELAY) {
+                        search(text.toString())
+                    }
                 }
             }
         })
@@ -67,16 +68,16 @@ class SearchFragment : Fragment() {
             adapter = hubAdapter
         }
     }
+
     private fun showError(throwable: Throwable) {
         Log.e("Donkey", "Coroutine error: ${throwable.message}")
         Toast.makeText(requireContext(), "Some error here!", Toast.LENGTH_SHORT).show()
     }
 
     private fun prepareLiveDataObserver() = with(viewModel) {
-        searchResult.observe(viewLifecycleOwner, EventObserver { hubAdapter.updateList(it) })
-        error.observe(viewLifecycleOwner, EventObserver {
-            showError(it)
-        })
+        searchResult.observe(viewLifecycleOwner, EventObserver {
+            hubAdapter.updateList(it) })
+        error.observe(viewLifecycleOwner, EventObserver { showError(it) })
     }
 
     companion object {

@@ -11,6 +11,8 @@ import com.example.donkeychallenge.model.HubLocation
 import com.example.donkeychallenge.model.SearchResult
 import com.example.donkeychallenge.utils.Event
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.SphericalUtil
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
@@ -29,9 +31,9 @@ class MainViewModel(private val donkeyRepository: DonkeyRepository) : ViewModel(
         _error.value = Event(throwable)
     }
 
-    fun getNearbyHubs(latLng: LatLng, radius: Int, currentlyAddedHubsLocations: List<LatLng>) {
+    fun getNearbyHubs(latLng: LatLng, bounds: LatLngBounds, currentlyAddedHubsLocations: List<LatLng>) {
         viewModelScope.launch(coroutineExceptionHandler) {
-            val newHubs = donkeyRepository.getNearbyHubsLocation(latLng.toRequestString(LOCATION_STRING_FORMAT), radius)
+            val newHubs = donkeyRepository.getNearbyHubsLocation(latLng.toRequestString(LOCATION_STRING_FORMAT), calculateRadius(bounds))
                 .map { HubLocation(it.name, LatLng(it.latitude.toDouble(), it.longitude.toDouble())) }
                 .toMutableList()
 
@@ -49,6 +51,9 @@ class MainViewModel(private val donkeyRepository: DonkeyRepository) : ViewModel(
     fun pickHub(result: SearchResult) = with(result) {
         _pickedHub.value = Event(HubLocation(name, LatLng(latitude.toDouble(), longitude.toDouble())))
     }
+
+    private fun calculateRadius(currentBounds: LatLngBounds) =
+        (SphericalUtil.computeDistanceBetween(currentBounds.northeast, currentBounds.southwest) / 2).toInt()
 
     companion object {
 

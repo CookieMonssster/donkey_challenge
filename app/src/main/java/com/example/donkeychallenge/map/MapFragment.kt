@@ -23,7 +23,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.maps.android.SphericalUtil
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -33,6 +32,7 @@ class MapFragment : Fragment() {
     private lateinit var binding: FragmentMapBinding
     private val viewModel by sharedViewModel<MainViewModel>()
     private val markersOnMap = mutableListOf<Marker>()
+    private var currentSearch: LatLng? = null
 
 
     private val callback = OnMapReadyCallback { googleMap ->
@@ -71,16 +71,18 @@ class MapFragment : Fragment() {
     }
 
     private fun showPickedHub(googleMap: GoogleMap, hub: HubLocation) = with(googleMap) {
+        moveCamera(CameraUpdateFactory.newLatLngZoom(hub.location, INIT_ZOOM))
         addMarker(MarkerOptions().position(hub.location).title(hub.name))?.apply {
             showInfoWindow()
             markersOnMap.add(this)
         }
-        moveCamera(CameraUpdateFactory.newLatLngZoom(hub.location, INIT_ZOOM))
+        getNearbyHubs(this)
     }
 
     private fun showHubsLocation(googleMap: GoogleMap, hubs: List<HubLocation>) = with(googleMap) {
+        val currentBounds = projection.visibleRegion.latLngBounds
         hubs.forEach {
-            if (projection.visibleRegion.latLngBounds.contains(it.location)) {
+            if (currentBounds.contains(it.location)) {
                 addMarker(MarkerOptions().position(it.location).title(it.name))?.let { marker ->
                     markersOnMap.add(marker)
                 }
@@ -90,25 +92,18 @@ class MapFragment : Fragment() {
 
     private fun getNearbyHubs(googleMap: GoogleMap) = with(googleMap) {
         removeInvisibleMarkers(this)
-        projection.visibleRegion.latLngBounds.run {
-            viewModel.getNearbyHubs(
-                cameraPosition.target,
-                getSearchRadius(this@with),
-                markersOnMap.map { it.position })
-        }
-    }
-
-    private fun getSearchRadius(googleMap: GoogleMap): Int = googleMap.run {
-        projection.visibleRegion.latLngBounds.run {
-            (SphericalUtil.computeDistanceBetween(northeast, southwest) / 2).toInt()
-        }
+        viewModel.getNearbyHubs(
+            cameraPosition.target,
+            projection.visibleRegion.latLngBounds,
+            markersOnMap.map { it.position }
+        )
     }
 
     private fun removeInvisibleMarkers(googleMap: GoogleMap) = with(googleMap) {
         val currentBounds = projection.visibleRegion.latLngBounds
         val markersToRemove = mutableListOf<Marker>()
         markersOnMap.forEach {
-            if (currentBounds.contains(it.position).not()) {
+            if (currentBounds.contains(it.position).not() && it.position != currentSearch) {
                 markersToRemove.add(it)
                 it.remove()
             }
@@ -126,7 +121,7 @@ class MapFragment : Fragment() {
             binding.searchButton.clicks().collect {
                 activity?.supportFragmentManager
                     ?.beginTransaction()
-                    ?.replace(R.id.fragment_container, SearchFragment.newInstance())
+                    ?.add(R.id.fragment_container, SearchFragment.newInstance())
                     ?.addToBackStack(null)
                     ?.commit()
             }

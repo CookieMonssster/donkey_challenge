@@ -7,6 +7,7 @@ import com.example.donkeychallenge.model.HubLocation
 import com.example.donkeychallenge.model.SearchResult
 import com.example.donkeychallenge.utils.Event
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
@@ -44,6 +45,7 @@ class MainViewModelTest {
     @Test
     fun `Check getting nearby Hubs method` () = runBlocking {
 
+        val latLngBounds = LatLngBounds(LatLng(0.0, 0.0), LatLng(0.0, 0.0))
             val someHubLocations = listOf(
                 HubLocation("SomeHub", LatLng(13.31, 12.21))
             )
@@ -55,7 +57,7 @@ class MainViewModelTest {
 
             whenever(donkeyRepository.getNearbyHubsLocation(any(), any())).thenReturn(someHub)
 
-            viewModel.getNearbyHubs(LatLng(1.3, 1.3), 100, listOf(LatLng(15.51, 14.41)))
+            viewModel.getNearbyHubs(LatLng(1.3, 1.3), latLngBounds, listOf(LatLng(15.51, 14.41)))
             viewModel.hubsLocations.observeForever { }
             assertEquals(someHubLocations, viewModel.hubsLocations.value)
     }
