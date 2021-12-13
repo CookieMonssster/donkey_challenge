@@ -23,6 +23,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -32,8 +33,6 @@ class MapFragment : Fragment() {
     private lateinit var binding: FragmentMapBinding
     private val viewModel by sharedViewModel<MainViewModel>()
     private val markersOnMap = mutableListOf<Marker>()
-    private var currentSearch: LatLng? = null
-
 
     private val callback = OnMapReadyCallback { googleMap ->
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(COPENHAGEN, INIT_ZOOM))
@@ -45,7 +44,7 @@ class MapFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? = FragmentMapBinding.inflate(inflater, container, false)
+    ): View = FragmentMapBinding.inflate(inflater, container, false)
         .also { binding = it }
         .root
 
@@ -103,7 +102,7 @@ class MapFragment : Fragment() {
         val currentBounds = projection.visibleRegion.latLngBounds
         val markersToRemove = mutableListOf<Marker>()
         markersOnMap.forEach {
-            if (currentBounds.contains(it.position).not() && it.position != currentSearch) {
+            if (currentBounds.contains(it.position).not()) {
                 markersToRemove.add(it)
                 it.remove()
             }
