@@ -4,12 +4,12 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import by.kirich1409.viewbindingdelegate.viewBinding
+import com.example.donkeychallenge.R
 import com.example.donkeychallenge.databinding.FragmentSearchBinding
 import com.example.donkeychallenge.main.MainViewModel
 import com.example.donkeychallenge.model.SearchResult
@@ -18,18 +18,11 @@ import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.util.*
 import kotlin.concurrent.schedule
 
-class SearchFragment : Fragment() {
+class SearchFragment : Fragment(R.layout.fragment_search) {
 
-    private lateinit var binding: FragmentSearchBinding
+    private val binding: FragmentSearchBinding by viewBinding()
     private val viewModel by sharedViewModel<MainViewModel>()
     private val hubAdapter = HubAdapter(::onHubClicked)
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? = FragmentSearchBinding.inflate(inflater, container, false)
-        .also { binding = it }
-        .root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -42,22 +35,21 @@ class SearchFragment : Fragment() {
         activity?.supportFragmentManager?.popBackStack()
     }
 
-    private fun search(query: String) {
-        viewModel.search(query)
-    }
-
-    private fun initView() = with(binding) {
+    private fun initView() = binding.apply {
         textInput.addTextChangedListener(object : TextWatcher {
             var timer: Timer? = null
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {} //not used
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                timer?.cancel()
+                timer?.apply {
+                    cancel()
+                    purge()
+                }
             }
 
             override fun afterTextChanged(text: Editable?) {
                 timer = Timer().apply {
                     schedule(TEXT_WATCHER_DELAY) {
-                        search(text.toString())
+                        viewModel.search(text.toString())
                     }
                 }
             }

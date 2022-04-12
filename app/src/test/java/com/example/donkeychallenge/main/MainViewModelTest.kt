@@ -43,23 +43,23 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `Check getting nearby Hubs method` () = runBlocking {
+    fun `Check getting nearby Hubs method`() = runBlocking {
 
         val latLngBounds = LatLngBounds(LatLng(0.0, 0.0), LatLng(0.0, 0.0))
-            val someHubLocations = listOf(
-                HubLocation("SomeHub", LatLng(13.31, 12.21))
-            )
+        val someHubLocations = listOf(
+            HubLocation("SomeHub", LatLng(13.31, 12.21))
+        )
 
-            val someHub = listOf(
-                Hub(name = "SomeHub", latitude = "13.31", longitude = "12.21"),
-                Hub(name = "SomeHub2", latitude = "15.51", longitude = "14.41")
-            )
+        val someHub = listOf(
+            Hub(name = "SomeHub", latitude = "13.31", longitude = "12.21"),
+            Hub(name = "SomeHub2", latitude = "15.51", longitude = "14.41")
+        )
 
-            whenever(donkeyRepository.getNearbyHubsLocation(any(), any())).thenReturn(someHub)
+        whenever(donkeyRepository.getNearbyHubsLocation(any(), any())).thenReturn(someHub)
 
-            viewModel.getNearbyHubs(LatLng(1.3, 1.3), latLngBounds, listOf(LatLng(15.51, 14.41)))
-            viewModel.hubsLocations.observeForever { }
-            assertEquals(someHubLocations, viewModel.hubsLocations.value)
+        viewModel.getNearbyHubs(LatLng(1.3, 1.3), latLngBounds, listOf(LatLng(15.51, 14.41)))
+        viewModel.hubsLocations.observeForever { }
+        assertEquals(someHubLocations, viewModel.hubsLocations.value)
     }
 
     @Test
@@ -72,7 +72,7 @@ class MainViewModelTest {
 
         whenever(donkeyRepository.search(any())).thenReturn(someSearchResult)
         viewModel.search("")
-        viewModel.searchResult.observeForever {  }
+        viewModel.searchResult.observeForever { }
         assertEquals(someSearchResult, viewModel.searchResult.value?.peekContent())
     }
 
@@ -82,8 +82,8 @@ class MainViewModelTest {
         val someSearch = SearchResult(1, "someHubName", "2.33", "3.22")
         val someHub = Event(HubLocation("someHubName", LatLng(2.33, 3.22)))
 
-            viewModel.pickHub(someSearch)
-            viewModel.pickedHub.observeForever { }
-            assertEquals(viewModel.pickedHub.value?.peekContent(), someHub.peekContent())
+        viewModel.pickHub(someSearch)
+        viewModel.pickedHub.observeForever { }
+        assertEquals(viewModel.pickedHub.value?.peekContent(), someHub.peekContent())
     }
 }

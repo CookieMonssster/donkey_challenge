@@ -2,12 +2,11 @@ package com.example.donkeychallenge.map
 
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import by.kirich1409.viewbindingdelegate.viewBinding
 import com.example.donkeychallenge.R
 import com.example.donkeychallenge.databinding.FragmentMapBinding
 import com.example.donkeychallenge.extension.cameraMove
@@ -23,14 +22,13 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
-class MapFragment : Fragment() {
+class MapFragment : Fragment(R.layout.fragment_map) {
 
-    private lateinit var binding: FragmentMapBinding
+    private val binding: FragmentMapBinding by viewBinding()
     private val viewModel by sharedViewModel<MainViewModel>()
     private val markersOnMap = mutableListOf<Marker>()
 
@@ -39,14 +37,6 @@ class MapFragment : Fragment() {
         prepareLiveDataObservers(googleMap)
         initOnMapMoveListener(googleMap)
     }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View = FragmentMapBinding.inflate(inflater, container, false)
-        .also { binding = it }
-        .root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
